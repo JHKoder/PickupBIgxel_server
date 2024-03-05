@@ -20,33 +20,34 @@ configurations {
 repositories {
     mavenCentral()
     jcenter()
-    maven {
-        url 'https://m2.dv8tion.net/releases'
-    }
 }
 
 dependencies {
-    implementation 'com.sedmelluq:lavaplayer:1.3.77'
-    implementation 'net.dv8tion:JDA:5.0.0-beta.5'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    annotationProcessor "org.springframework.boot:spring-boot-autoconfigure-processor"
 
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.2'
-    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
-
-    //db
-    runtimeOnly 'com.h2database:h2'
-    testImplementation 'com.h2database:h2'
 
     //test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+allprojects { proj ->
+    println "Included Module: ${proj.name}"
+}
+
+task generatePropertiesFile {
+    doLast {
+        def includedModules = subprojects.collect { it.name }
+        file('src/main/resources/environment-modules.yml').text  = "environment: \n  modules: \n${includedModules.collect { "    - $it" }.join('\n')}"
+    }
+}
+assemble.dependsOn generatePropertiesFile
