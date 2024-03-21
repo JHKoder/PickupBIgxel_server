@@ -1,7 +1,10 @@
 plugins {
+    id 'cpp'
+    id 'c'
     id 'java'
     id 'org.springframework.boot' version '3.1.2'
     id 'io.spring.dependency-management' version '1.1.2'
+    id 'org.graalvm.buildtools.native' version '0.9.17'
 }
 
 group = 'github.jhkoder'
@@ -22,22 +25,55 @@ repositories {
     jcenter()
 }
 
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter'
-    annotationProcessor "org.springframework.boot:spring-boot-autoconfigure-processor"
-
-
-    //test
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params'
-}
-
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// src/main/java/github/jhkoder/rest/system 폴더 내의 Java 파일을 컴파일하고 .h 파일을 생성
+task generateHeaderFiles(type: JavaCompile) {
+    source = fileTree('src/main/java/github/jhkoder/rest/system')
+    classpath = sourceSets.main.compileClasspath
+    destinationDir = file("src/main/native/h")
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-h', destinationDir])
+}
+
+tasks.build.dependsOn generateHeaderFiles
+
+
+// native c file build
+task compileNativeCodeBuild(type: Exec) {
+    def cFiles = fileTree(dir: 'src/main/native/c', include: '**/*.cpp').files
+    def jniIncludeDir = System.getenv('JAVA_JNI_HOME')
+    def outputDir = 'src/main/native' // 수정된 부분: .dll 파일이 저장될 경로
+
+    // .c 파일을 순회하면서 .dll 파일을 디렉토리에 컴파일
+    cFiles.each { file ->
+        def outputFile = "${outputDir}/dll/${file.name.replaceAll('\\.cpp', '.dll')}" // 수정된 부분: 출력 파일 경로 설정
+        def compileCommand = ['g++', '-shared', '-fPIC', '-I', jniIncludeDir, '-I', "${jniIncludeDir}/win32"]
+        compileCommand += file.path
+        compileCommand += ['-o', outputFile]
+        println outputFile
+        commandLine(compileCommand)
+
+        outputFile = "${outputDir}/so/${file.name.replaceAll('\\.cpp', '.so')}" // 수정된 부분: 출력 파일 경로 설정
+        def compileCommandLinux = ['g++', '-shared', '-fPIC', '-I', jniIncludeDir, '-I', "${jniIncludeDir}/win32"]
+        compileCommandLinux += file.path
+        compileCommandLinux += ['-o', outputFile]
+        println outputFile
+        exec{
+            commandLine(compileCommandLinux)
+        }
+    }
+}
+
+// build 시 native 내 .c , dll, .so 를 탐색하기 위해 셋팅
+sourceSets {
+    main {
+        resources {
+            srcDirs 'src/main/native'
+        }
+    }
 }
 
 allprojects { proj ->
@@ -47,7 +83,24 @@ allprojects { proj ->
 task generatePropertiesFile {
     doLast {
         def includedModules = subprojects.collect { it.name }
-        file('src/main/resources/environment-modules.yml').text  = "environment: \n  modules: \n${includedModules.collect { "    - $it" }.join('\n')}"
+        file('src/main/resources/environment-modules.yml').text = "environment: \n  modules: \n${includedModules.collect { "    - $it" }.join('\n')}"
     }
 }
 assemble.dependsOn generatePropertiesFile
+
+jar {
+    from sourceSets.main.output
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    annotationProcessor "org.springframework.boot:spring-boot-autoconfigure-processor"
+
+    //test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params'
+}
