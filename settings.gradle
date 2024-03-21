@@ -1,1 +1,4 @@
 rootProject.name = 'rest_mm'
+include 'rest_mm_test2_moudule'
+include 'rest_mm_test1_moudule'
+
