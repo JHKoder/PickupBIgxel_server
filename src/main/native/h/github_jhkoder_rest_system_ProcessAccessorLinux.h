@@ -18,9 +18,9 @@ JNIEXPORT jboolean JNICALL Java_github_jhkoder_rest_system_ProcessAccessorLinux_
 /*
  * Class:     github_jhkoder_rest_system_ProcessAccessorLinux
  * Method:    getTargetProfile
- * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Lgithub/jhkoder/rest/system/ProcessResourceResponse;
  */
-JNIEXPORT jstring JNICALL Java_github_jhkoder_rest_system_ProcessAccessorLinux_getTargetProfile
+JNIEXPORT jobject JNICALL Java_github_jhkoder_rest_system_ProcessAccessorLinux_getTargetProfile
   (JNIEnv *, jobject, jstring, jstring);
 
 #ifdef __cplusplus
