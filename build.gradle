@@ -1,6 +1,5 @@
 plugins {
     id 'cpp'
-    id 'c'
     id 'java'
     id 'org.springframework.boot' version '3.1.2'
     id 'io.spring.dependency-management' version '1.1.2'
@@ -67,6 +66,7 @@ task compileNativeCodeBuild(type: Exec) {
     }
 }
 
+
 // build 시 native 내 .c , dll, .so 를 탐색하기 위해 셋팅
 sourceSets {
     main {
@@ -82,8 +82,20 @@ allprojects { proj ->
 
 task generatePropertiesFile {
     doLast {
-        def includedModules = subprojects.collect { it.name }
-        file('src/main/resources/environment-modules.yml').text = "environment: \n  modules: \n${includedModules.collect { "    - $it" }.join('\n')}"
+        def includedModules = [:]
+        subprojects.each { project ->
+            def jarTask = project.tasks.findByName('jar')
+            if (jarTask) {
+                includedModules[project.name] = "${jarTask.archiveFileName.get()}"
+            }
+        }
+
+        def ymlContent = "environment:\n  modules:\n"
+        includedModules.each { moduleName, jarFileName ->
+            ymlContent += "    ${moduleName}: ${jarFileName}\n"
+        }
+
+        file('src/main/resources/environment-modules.yml').text = ymlContent
     }
 }
 assemble.dependsOn generatePropertiesFile

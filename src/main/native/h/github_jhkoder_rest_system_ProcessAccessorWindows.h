@@ -18,9 +18,9 @@ JNIEXPORT jboolean JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindow
 /*
  * Class:     github_jhkoder_rest_system_ProcessAccessorWindows
  * Method:    getTargetProfile
- * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Lgithub/jhkoder/rest/system/ProcessResourceResponse;
  */
-JNIEXPORT jstring JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindows_getTargetProfile
+JNIEXPORT jobject JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindows_getTargetProfile
   (JNIEnv *, jobject, jstring, jstring);
 
 #ifdef __cplusplus

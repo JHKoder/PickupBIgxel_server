@@ -1,5 +1,8 @@
 package github.jhkoder.rest.system;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ProcessAccessorExecutor implements ProcessAccessor{
 
     private final ProcessAccessor processAccessor;
@@ -14,14 +17,17 @@ public class ProcessAccessorExecutor implements ProcessAccessor{
 
     @Override
     public boolean isProcessRunning(String name, String extension) {
-        return processAccessor.isProcessRunning(name,extension);
+        return processAccessor.isProcessRunning(name,"."+extension);
     }
     public boolean isProcessRunning(String name) {
         return processAccessor.isProcessRunning(name,"");
     }
 
     @Override
-    public String getTargetProfile(String name, String extension) {
+    public ProcessResourceResponse getTargetProfile(String name, String extension) {
         return processAccessor.getTargetProfile(name,extension);
+    }
+    public ProcessResourceResponse getTargetProfile(String name) {
+        return processAccessor.getTargetProfile(name,"");
     }
 }

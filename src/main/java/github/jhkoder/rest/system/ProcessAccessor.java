@@ -4,5 +4,5 @@ public interface ProcessAccessor {
 
     boolean isProcessRunning(String name, String extension);
 
-    String getTargetProfile(String name, String extension);
+    ProcessResourceResponse getTargetProfile(String name, String extension);
 }
