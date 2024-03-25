@@ -2,9 +2,14 @@
 #include <stdio.h>
 #include <windows.h>
 #include <tlhelp32.h>
+#include <psapi.h>
 #include <cstring>
 #include <iostream>
+#include <cstring>
+#include <chrono>
 #include <string>
+#include <ctime>
+
 #include "../h/github_jhkoder_rest_system_ProcessAccessorWindows.h"
 
 bool isProcessRunning(const char* processName) {
@@ -22,12 +27,12 @@ bool isProcessRunning(const char* processName) {
     }
 
     do {
-        printf("-> %s == %s ",processName ,pe.szExeFile);
+        if (strcmp(processName, pe.szExeFile) == 0) {
+        CloseHandle(hSnapshot);
         return true;
-//        if (processName.compare(pe.szExeFile) == 0) {
-//            CloseHandle(hSnapshot);
-//            return true;
-//        }
+    }
+
+std::cout << "-> " << processName << " == " << pe.szExeFile << " \n";
     } while (Process32Next(hSnapshot, &pe));
 
     CloseHandle(hSnapshot);
@@ -39,7 +44,6 @@ JNIEXPORT jboolean JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindow
     (JNIEnv *env, jobject obj1, jstring name, jstring extension) {
     const char *nameStr = env->GetStringUTFChars(name, nullptr);
     const char *extensionStr = env->GetStringUTFChars(extension, nullptr);
-    std::cout << "2020년 3월 20일\n나는 잠도 못 자고 포스팅을 하고 있다.";
 
     std::string processName = std::string(nameStr) + std::string(extensionStr);
 
@@ -52,32 +56,28 @@ JNIEXPORT jboolean JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindow
     return result ? JNI_TRUE : JNI_FALSE;
 }
 
-JNIEXPORT jstring JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindows_getTargetProfile
+JNIEXPORT jobject JNICALL Java_github_jhkoder_rest_system_ProcessAccessorWindows_getTargetProfile
     (JNIEnv *env, jobject obj1, jstring name, jstring extension){
-    const char *str = "Hello from C!";
+    // Java의 String 객체를 C++의 const char*로 변환
+    const char *nameStr = env->GetStringUTFChars(name, nullptr);
+    const char *extensionStr = env->GetStringUTFChars(extension, nullptr);
 
-    // Java 문자열로 변환하여 반환
-    return env->NewStringUTF(str);
+    // 프로세스 리소스 정보 가져오기 및 계산
+    double cpuUsage = 0.0; // CPU 사용량 계산
+    double memoryUsage = 0.0; // 메모리 사용량 계산
+
+    // 프로세스 시작 시간 가져오기
+    jlong startTimeMillis = std::chrono::system_clock::now().time_since_epoch().count();
+    jobject startTime = env->NewObject(env->FindClass("java/util/Date"), env->GetMethodID(env->FindClass("java/util/Date"), "<init>", "(J)V"), startTimeMillis);
+
+    // ProcessResourceResponse 객체 생성
+    jclass prrClass = env->FindClass("ProcessResourceResponse");
+    jmethodID constructor = env->GetMethodID(prrClass, "<init>", "(Ljava/util/Date;DD)V");
+    jobject result = env->NewObject(prrClass, constructor, startTime, cpuUsage, memoryUsage);
+
+    // Java의 String 객체 반환 및 메모리 해제
+    env->ReleaseStringUTFChars(name, nameStr);
+    env->ReleaseStringUTFChars(extension, extensionStr);
+
+    return result;
 }
-
-
-
-/*
-
-문자열 포인터 얻기
-GetStringUTFChars() [UTF-8] env->GetStringUTFChars(str, nullptr);
-GetStringChars() [UTF-16]
-
-문자열에 할당한 메모리 해제
-ReleaseStringUTFChars() [UTF-8] ReleaseStringUTFChars(name, cName);
-ReleaseStringChars() [UTF-16]
-
-문자열 길이
-GetStringUTFLength() [UTF-8]
-GetStringLength() [UTF-16]
-
-자바 문자열 생성
-NewStringUTF() [UTF-8] NewStringUTF("This is our string!");
-NewString [UTF-16]
-
-*/
