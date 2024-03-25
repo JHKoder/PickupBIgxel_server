@@ -1,11 +1,15 @@
 package github.jhkoder.rest.system;
 
+import java.nio.file.Path;
+
 public class ProcessAccessorLinux implements ProcessAccessor {
 
     public native boolean isProcessRunning(String name,String extension);
-    public native String getTargetProfile(String name,String extension);
+    public native ProcessResourceResponse getTargetProfile(String name,String extension);
 
     static {
-        System.load(System.getProperty("user.dir")+ "/src/main/native/so/ProcessCheckLinux.so"); // 라이브러리 로드
+        String path = Path.of(System.getProperty("user.dir"),
+                "src","main","native","so","ProcessCheckLinux.so").toString();
+        System.load(path);
     }
 }
